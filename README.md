@@ -50,6 +50,5 @@ Las consultas están organizadas y comentadas para facilitar su lectura y modifi
 
 ---
 
-## 📂 Estructura del repositorio
 
 
