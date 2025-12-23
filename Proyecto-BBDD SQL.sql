@@ -37,7 +37,7 @@ apellido.*/
 
 select "first_name",  "last_name"
 from actor 
-where "last_name" = 'ALLEN' ;
+where "last_name" like '%ALLEN%' ;
 
 
 /*7. Encuentra la cantidad total de películas en cada clasificación de la tabla
@@ -74,13 +74,13 @@ from film ;
 
 /*11. Encuentra lo que costó el antepenúltimo alquiler ordenado por día*/
 
-select "title" , "rental_rate" , "last_update"
-from film 
-order by "last_update" desc
-limit 1
-offset 2 ;
-
-
+select *
+from rental
+inner join payment as pagos
+on rental.rental_id = pagos.rental_id 
+order by rental.rental_date desc
+offset 2
+limit 1 ;
 
 /*12. Encuentra el título de las películas en la tabla “film” que no sean ni ‘NC17’ ni ‘G’ en cuanto a su clasificación*/
 
@@ -121,11 +121,11 @@ from payment  ;
 
 /*16. Muestra los 10 clientes con mayor valor de id.*/
 
-select "customer_id" , count("customer_id")
+select "customer_id"
 from payment 
 group by "customer_id" 
 order by "customer_id" desc
-limit 10
+limit 10 ;
 
 
 /*17. Encuentra el nombre y apellido de los actores que aparecen en la
@@ -219,9 +219,10 @@ where "length" > (
 /*25. Averigua el número de alquileres registrados por mes.*/
 
 
-select "rental_date" , count("rental_id")
+select date_trunc('month', "rental_date") as mes, count(*) as total_alquileres
 from rental r 
-group by rental_date 
+group by mes 
+order by mes ;
 
 
 
@@ -489,7 +490,7 @@ group by cliente ;
 /*50. Calcula la duración total de las películas en la categoría 'Action'*/
 
 
-select peliculas.title as titulo , categorias.name , peliculas.length
+select sum(peliculas.length) as duracion_total
 from category as categorias
 inner join film_category as fc
 on categorias.category_id = fc.category_id 
@@ -551,7 +552,7 @@ película que pertenece a la categoría ‘Sci-Fi’. Ordena los resultados
 alfabéticamente por apellido.*/
 
 
-select concat(actores.first_name , ' ' , actores.last_name) as nombre_completo , peliculas.title as titulo_pelicula, 
+select actores.first_name , actores.last_name , peliculas.title as titulo_pelicula, 
 categoria."name" as categoria_pelicula 
 from actor as actores
 inner join film_actor as fa
@@ -562,8 +563,8 @@ inner join film_category as fc
 on peliculas.film_id = fc.film_id 
 inner join category as categoria
 on fc.category_id = categoria.category_id 
-where categoria."name" = 'Sci-Fi' ;
-
+where categoria."name" = 'Sci-Fi' 
+order by actores.last_name ;
 
 
 
@@ -600,18 +601,15 @@ order by apellido ;
 /*56. Encuentra el nombre y apellido de los actores que no han actuado en
 ninguna película de la categoría ‘Music’*/
 	
-
-select distinct actores.first_name as nombre, actores.last_name as apellido
-from category as categorias
-inner join film_category as fc
-on categorias.category_id = fc.category_id 
-inner join film as peliculas
-on fc.film_id = peliculas.film_id 
-inner join film_actor as fa
-on peliculas.film_id = fa.film_id 
-inner join actor as actores
-on fa.actor_id = actores.actor_id 
-where categorias.name <> 'Music' ;
+select  a.first_name as nombre, a.last_name AS apellido
+from actor a
+where a.actor_id not in (
+    select fa.actor_id
+    from film_actor fa
+    join film_category fc on fa.film_id = fc.film_id
+    join category c on fc.category_id = c.category_id
+    where c.name = 'Music' )
+order by apellido, nombre;
 
 
 
